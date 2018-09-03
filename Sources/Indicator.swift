@@ -41,6 +41,7 @@ public enum IndicatorType {
     case none
     /// Use system activity indicator.
     case activity
+    case activityWhite
     /// Use an image as indicator. GIF is supported.
     case image(imageData: Data)
     /// Use a custom indicator, which conforms to the `Indicator` protocol.
@@ -137,6 +138,57 @@ final class ActivityIndicator: Indicator {
             #endif
             activityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle:indicatorStyle)
             activityIndicatorView.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin, .flexibleBottomMargin, .flexibleTopMargin]
+        #endif
+    }
+}
+
+final class ActivityIndicatorWhite: Indicator {
+
+    #if os(macOS)
+    private let activityIndicatorView: NSProgressIndicator
+    #else
+    private let activityIndicatorView: UIActivityIndicatorView
+    #endif
+    private var animatingCount = 0
+
+    var view: IndicatorView {
+        return activityIndicatorView
+    }
+
+    func startAnimatingView() {
+        animatingCount += 1
+        // Already animating
+        if animatingCount == 1 {
+            #if os(macOS)
+            activityIndicatorView.startAnimation(nil)
+            #else
+            activityIndicatorView.startAnimating()
+            #endif
+            activityIndicatorView.isHidden = false
+        }
+    }
+
+    func stopAnimatingView() {
+        animatingCount = max(animatingCount - 1, 0)
+        if animatingCount == 0 {
+            #if os(macOS)
+            activityIndicatorView.stopAnimation(nil)
+            #else
+            activityIndicatorView.stopAnimating()
+            #endif
+            activityIndicatorView.isHidden = true
+        }
+    }
+
+    init() {
+        #if os(macOS)
+        activityIndicatorView = NSProgressIndicator(frame: CGRect(x: 0, y: 0, width: 16, height: 16))
+        activityIndicatorView.controlSize = .small
+        activityIndicatorView.style = .spinning
+        #else
+        let indicatorStyle = UIActivityIndicatorViewStyle.white
+        activityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle:indicatorStyle)
+        activityIndicatorView.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin, .flexibleBottomMargin, .flexibleTopMargin]
         #endif
     }
 }
